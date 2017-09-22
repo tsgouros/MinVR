@@ -1,6 +1,7 @@
 
 #include "VRFakeTrackerDevice.h"
 #include <math/VRMath.h>
+#include <api/VRTrackerEvent.h>
 
 namespace MinVR {
 
@@ -70,8 +71,7 @@ void VRFakeTrackerDevice::onVREvent(const VRDataIndex &eventData)
                 VRVector3 pos = VRVector3(_xyScale * mousex, _xyScale * mousey, _z);
                 VRMatrix4 xform  = VRMatrix4::translation(pos) * _R;
 
-                VRDataIndex di(_eventName);
-                di.addData("Transform", xform);
+                VRDataIndex di = VRTrackerEvent::createValidDataIndex(_eventName, xform.toVRFloatArray());
                 _pendingEvents.push_back(di);
             }
 
