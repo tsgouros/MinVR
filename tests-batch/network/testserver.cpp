@@ -1,5 +1,10 @@
 #include <net/VRNetServer.h>
 
+int main() {
+  //this is literally just so I can compile 
+  return 2; 
+}
+
 // NOTE program to test VRNetServer receiveall
 // Intended to be used in tandem with testclient sendall test program
 /*
@@ -65,20 +70,20 @@ int main(int argc, char* argv[]) {
 }
 */
 
-// NOTE program to test syncSwapBuffersAcrossAllNodes_test with mulitple expected clients
-int main(int argc, char* argv[]) {
-  int defaultchoice = 2; //program by default expects 2 clients to connect
-  int choice = defaultchoice; //choice defines how many clients server should expect to connect
+// // NOTE program to test syncSwapBuffersAcrossAllNodes_test with mulitple expected clients
+// int main(int argc, char* argv[]) {
+//   int defaultchoice = 2; //program by default expects 2 clients to connect
+//   int choice = defaultchoice; //choice defines how many clients server should expect to connect
 
-  // server accepts one argument
-  if (argc > 1) {
-    if(sscanf(argv[1], "%d", &choice) != 1) {
-      printf("Couldn't parse that input as a number\n");
-      return -1;
-    }
-  }
+//   // server accepts one argument
+//   if (argc > 1) {
+//     if(sscanf(argv[1], "%d", &choice) != 1) {
+//       printf("Couldn't parse that input as a number\n");
+//       return -1;
+//     }
+//   }
 
-	MinVR::VRNetServer server = MinVR::VRNetServer("3490", choice);
-	server.syncSwapBuffersAcrossAllNodes_test();
-  std::cout << "done" << '\n';
-}
+// 	MinVR::VRNetServer server = MinVR::VRNetServer("3490", choice);
+// 	server.syncSwapBuffersAcrossAllNodes_test();
+//   std::cout << "done" << '\n';
+// }
