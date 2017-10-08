@@ -1,7 +1,9 @@
 #include <net/VRNetServer.h>
 
 int main() {
-  //this is literally just so I can compile 
+  //this is literally just so I can compile
+  printf("is this real life \n");  
+  MinVR::VRNetServer server = MinVR::VRNetServer("3490",1); 
   return 2; 
 }
 

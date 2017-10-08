@@ -104,8 +104,20 @@ int main(int argc, char* argv[]) {
 }
 */
 
+int launchclient_f(int argc, char* argv[]) {
+	srand(time(NULL));
+	long r = random();
+	MinVR::VRNetClient client = MinVR::VRNetClient("localhost", "3490");
+	if (r % 2 == 0) {
+		sleep(5);
+	}
+	std::cout << "lc: SYNC SWAP BUFFERS REQUEST" << std::endl;
+	client.syncSwapBuffersAcrossAllNodes();
+	exit(0);
+}
+
 int main(int argc, char* argv[]) {
-  int defaultchoice = 2; // program by default instantiates 2 clients
+  int defaultchoice = 1; // program by default instantiates 2 clients
   int choice = defaultchoice;
 
   if (argc > 1) {
@@ -127,14 +139,14 @@ int main(int argc, char* argv[]) {
     if (pids[i] < 0) {
       printf("fork() faled\n");
     } else if (pids[i] == 0) {
-      //printf("Child process %d (parent %d) syncSwapBuffersAcrossAllNodes_test\n", getpid(), getppid());
-    	// MinVR::VRNetClient client = MinVR::VRNetClient("localhost", "3490");
-      // if (r % 2 == 0) {
-      //   sleep(5);
-      // }
-      // std::cout << "SYNC SWAP BUFFERS REQUEST" << std::endl;
-    	// client.syncSwapBuffersAcrossAllNodes();
-      // exit(0);
+  //     //printf("Child process %d (parent %d) syncSwapBuffersAcrossAllNodes_test\n", getpid(), getppid());
+  //   	// MinVR::VRNetClient client = MinVR::VRNetClient("localhost", "3490");
+  //     // if (r % 2 == 0) {
+  //     //   sleep(5);
+  //     // }
+  //     // std::cout << "SYNC SWAP BUFFERS REQUEST" << std::endl;
+  //   	// client.syncSwapBuffersAcrossAllNodes();
+  //     // exit(0);
       int ret = execl("bin/launchclient", "bin/launchclient", (char*)NULL);
       if (ret < 0) {
         std::cerr << "execl failed: " << errno << '\n';
