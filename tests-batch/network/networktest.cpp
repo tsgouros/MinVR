@@ -25,7 +25,7 @@ int testConnection();
 #define NUMCLIENTS 10
 #define PORT "3069"
 
-int nettest(int argc, char* argv[]) {
+int networktest(int argc, char* argv[]) {
   
   int defaultchoice = 1;
   

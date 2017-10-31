@@ -7,20 +7,18 @@
 //dev dependencies
 #include <errno.h>
 #include <string>
-#include <pthread.h>
-
-#include "launch.h" // access network setup commands
-
-
 #include <cstdlib>
 
+#include "net/VRNetClient.h"
+#include "net/VRNetServer.h"
+#include "net/VRNetInterface.h"
 
-// int launchClients(int numClients) {
-//     return 1; 
-// }
+extern "C" {
+    #include <pthread.h>
+}
 
 #define PORT "3069"
-#define NUMCLIENTS 10
+#define NUMCLIENTS 2
 
 void *ls(void *blank){
    
@@ -59,29 +57,24 @@ int main(int argc,char* argv[]){
     int defaultExpectedClients = 2; 
     int blank = 1;
 
-    //int st_status = pthread_once(&once_control,ls);
     int st_status = pthread_create(&stID,NULL,ls,(void *) blank);
-
-    if (st_status != 0){
-        printf("gloop\n"); 
-    } else {
-        printf("Server thread started\n"); 
-    }
      
     //put a small break before starting the clients for clarity
-    //sleep(2); 
+    sleep(2); 
 
     int ct_status; //check the client threads
 
     for (int i = 1; i <= NUMCLIENTS; i++){
         printf("client thread %d started\n",i);
         ct_status = pthread_create(&cids[i - 1],NULL,lc,(void *) blank); 
-        printf("client thread %d status: %d\n",i,ct_status); 
+        
+        if(ct_status){
+            printf("Failed to create client thread %d\n",i);
+        }
 
     }
        
     //MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
-    //int ret = execl("bin/testserver","bin/testserver",(char *) NULL); 
 
     printf("Main Thread continuing\n"); 
 
