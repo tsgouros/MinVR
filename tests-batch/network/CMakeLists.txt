@@ -7,7 +7,7 @@
 set (networktests network)
 # The numbers here correspond to 'case' statements in the respective
 # test program.  See, e.g., datumtest.cpp
-set (network_parts 1)
+set (network_parts 1 2 3)
 
 # For tests where a list of parts has not been defined we add a default of 1:
 foreach(networktest ${networktests})

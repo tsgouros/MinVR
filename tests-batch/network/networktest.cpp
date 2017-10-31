@@ -21,6 +21,8 @@ extern "C" {
 // detail.  This will also print out whatever goes to std::cout.
 
 int testConnection(); //test that clients and servers can connect
+int testEventData();
+int testSwapBuffer(); 
 
 // You can make this long to get better timing data.
 #define LOOP for (int loopctr = 0; loopctr < 10; loopctr++)
@@ -51,8 +53,15 @@ int networktest(int argc, char* argv[]) {
   case 1:
     output = testConnection();
     break;
+
+  case 2:
+    output = testEventData(); 
+    break;
+
+  case 3: 
+    output = testSwapBuffer();
+    break; 
     
-    // Add case statements to handle values of 2-->10
   default:
     std::cout << "Test #" << choice << " does not exist!\n";
     output = -1;
@@ -62,10 +71,9 @@ int networktest(int argc, char* argv[]) {
 }
 
 void *testServer(void *blank){
-  
-       //launch server on port, if it gets all connections it will exit
-       MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
-       pthread_exit((void *) 0);
+  //launch server on port, if it gets all connections it will exit
+  MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
+  pthread_exit((void *) 0);
 }
 
 // pass in the index of the task array this thread will update
@@ -138,7 +146,106 @@ int testConnection(){
       return_val = 1;
     }
   }
+
   return return_val; 
 }
 
+void *testServer_ed(void *blank)
+{
+  //launch server on port, if it gets all connections it will exit
+  MinVR::VRNetServer server = MinVR::VRNetServer(PORT, NUMCLIENTS);
 
+  //wait for event data sync requests from clients
+  MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
+
+  pthread_exit((void *)0);
+}
+
+// pass in the index of the task array this thread will update
+void *testClient_ed(void *ti)
+{
+  srand(time(NULL));
+  long r = random();
+
+  // cast to integer big enough to hold pointer
+  intptr_t task_index = (intptr_t)ti;
+
+  MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+
+  MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes("a");
+
+  if (client.status == 0)
+  {
+    tasks[task_index] = 0;
+    }
+    else
+    {
+      tasks[task_index] = 1;
+    }
+
+    if (r % 2 == 0)
+    {
+      sleep(5);
+    }
+
+    pthread_exit((void *)0);
+}
+
+int testEventData()
+{
+  pthread_t stID, cids[NUMCLIENTS];
+  pthread_attr_t ct_attr, st_attr;
+
+  pthread_attr_init(&st_attr);
+  pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+
+  int st_status = pthread_create(&stID, &st_attr, &testServer, NULL);
+
+  pthread_attr_destroy(&st_attr);
+
+  if (st_status != 0)
+  {
+    printf("Server thread creation failure");
+    return 1;
+  }
+
+  int ct_status; //check the client threads
+
+  pthread_attr_init(&ct_attr);
+  pthread_attr_setdetachstate(&ct_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setschedpolicy(&ct_attr, SCHED_FIFO);
+
+  for (int index = 0; index < NUMCLIENTS; index++)
+  {
+
+    ct_status = pthread_create(&cids[index], &ct_attr, &testClient, (void *)index);
+
+    if (ct_status != 0)
+    {
+      printf("client thread %d creation failure", index);
+      return 1;
+    }
+  }
+
+  pthread_attr_destroy(&ct_attr);
+
+  // wait for child threads then cut
+  pthread_exit(NULL);
+
+  int return_val = 0;
+
+  for (int i = 0; i < NUMCLIENTS; i++)
+  {
+    if (tasks[i] == 0)
+    {
+      return_val = 1;
+    }
+  }
+
+  return return_val;
+}
+
+int testSwapBuffer(){
+  return 0; 
+}
