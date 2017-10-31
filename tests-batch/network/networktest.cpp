@@ -3,27 +3,32 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
 #include "net/VRNetClient.h"
 #include "net/VRNetServer.h"
 #include "config/VRDataIndex.h"
 #include "config/VRDataQueue.h"
 
-//dev dependencies
 #include <errno.h>
 #include <string>
-#include <pthread.h>
-
 #include <cstdlib>
+
+extern "C" {
+    #include <pthread.h>
+}
 
 // If a 'make test' shows a test failing, try 'ctest -VV' to get more
 // detail.  This will also print out whatever goes to std::cout.
 
-int testConnection();
+int testConnection(); //test that clients and servers can connect
 
 // You can make this long to get better timing data.
 #define LOOP for (int loopctr = 0; loopctr < 10; loopctr++)
 #define NUMCLIENTS 10
 #define PORT "3069"
+
+//global variable that each thread will update with the status of its task
+int tasks[NUMCLIENTS];
 
 int networktest(int argc, char* argv[]) {
   
@@ -56,72 +61,84 @@ int networktest(int argc, char* argv[]) {
   return output;
 }
 
-void *launchServer(void *blank){
+void *testServer(void *blank){
   
-       //launch server on port 
+       //launch server on port, if it gets all connections it will exit
        MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
-       printf("%d",server); 
-
-       //MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
-   
-       pthread_exit(NULL);
-   
+       pthread_exit((void *) 0);
 }
 
-void *launchClients(void *blank){
+// pass in the index of the task array this thread will update
+void *testClient(void *ti){
   srand(time(NULL));
   long r = random();
+  
+  // cast to integer big enough to hold pointer
+  intptr_t task_index = (intptr_t) ti;
+
   MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+
+  if (client.status == 0){
+    tasks[task_index] = 0;
+  } else {
+    tasks[task_index] = 1;
+  }
+
   if (r % 2 == 0) {
       sleep(5);
   }
- 
- sleep(2);
- //std::cout << "lc: SYNC SWAP BUFFERS REQUEST" << std::endl;
- //client.syncSwapBuffersAcrossAllNodes();
-exit(0);
+  
+  pthread_exit((void *) 0); 
 }
 
 
 int testConnection(){ 
-  pthread_t stID, cid1, cid2; 
-  pthread_t cids[NUMCLIENTS];
-  pthread_once_t once_control = PTHREAD_ONCE_INIT;
-  void * blank;
+  pthread_t stID, cids[NUMCLIENTS];
+  pthread_attr_t ct_attr, st_attr; 
 
-  //int st_status = pthread_once(&once_control,ls);
-  int st_status = pthread_create(&stID,NULL,&launchServer,NULL);
+  pthread_attr_init(&st_attr); 
+  pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO); 
+
+  int st_status = pthread_create(&stID,&st_attr,&testServer,NULL);
+
+  pthread_attr_destroy(&st_attr); 
 
   if (st_status != 0){
-      printf("gloop\n"); 
-  } else {
-      printf("Server thread started\n"); 
-  }
-  
-  //put a small break before starting the clients for clarity
-  //sleep(2); 
+      printf("Server thread creation failure"); 
+      return 1;
+  } 
 
   int ct_status; //check the client threads
 
-  for (int i = 1; i <= NUMCLIENTS; i++){
-    printf("client thread %d started\n",i);
-      ct_status = pthread_create(&cids[i - 1],NULL,&launchClients,NULL); 
-      printf("client thread %d status: %d\n",i,ct_status); 
+  pthread_attr_init(&ct_attr);
+  pthread_attr_setdetachstate(&ct_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setschedpolicy(&ct_attr, SCHED_FIFO);
+
+  for (int index = 0; index < NUMCLIENTS; index++){
+
+      ct_status = pthread_create(&cids[index],&ct_attr,&testClient,(void *) index); 
+
+      if (ct_status != 0) {
+        printf("client thread %d creation failure",index);
+        return 1; 
+      }
 
   }
-  
-  //What is hanging???
-  //MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
-  //int ret = execl("bin/testserver","bin/testserver",(char *) NULL); 
 
-  printf("Main Thread continuing\n"); 
+  pthread_attr_destroy(&ct_attr); 
 
+  // wait for child threads then cut 
   pthread_exit(NULL); 
 
-  //I guess if it doesn't hang we can consider it a pass for now?
-  //try to push errors through
+  int return_val = 0; 
 
-  return 0; 
+  for (int i = 0; i < NUMCLIENTS; i++){
+    if(tasks[i] == 0){
+      return_val = 1;
+    }
+  }
+  return return_val; 
 }
 
 

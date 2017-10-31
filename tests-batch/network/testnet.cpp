@@ -20,6 +20,8 @@ extern "C" {
 #define PORT "3069"
 #define NUMCLIENTS 2
 
+int tasks[NUMCLIENTS];
+
 void *ls(void *blank){
    
         //launch server on port 
@@ -36,45 +38,54 @@ void *lc(void *blank){
     srand(time(NULL));
 	long r = random();
     MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+
+    pthread_t my_id = pthread_self(); 
     
-    printf("CLIENT GOT : %d\n",client.status); 
-	if (r % 2 == 0) {
-		sleep(5);
-    }
+    printf("This is thread: %d \n",blank); 
+
+    sleep(5); 
     
-    sleep(2);
 	//std::cout << "lc: SYNC SWAP BUFFERS REQUEST" << std::endl;
 	//client.syncSwapBuffersAcrossAllNodes();
-	return (void *) client.status;
+	pthread_exit(NULL); 
 }
-
 
 //this function tests the server and the client in tandem 
 int main(int argc,char* argv[]){
     pthread_t stID, cid1, cid2; 
     pthread_t cids[NUMCLIENTS];
-    pthread_once_t once_control = PTHREAD_ONCE_INIT;
+    pthread_attr_t ct_attr, st_attr;
 
-    const std::string defaultPort = "3049"; 
-    int defaultExpectedClients = 2; 
     int blank = 1;
 
-    int st_status = pthread_create(&stID,NULL,ls,(void *) blank);
+    pthread_attr_init(&st_attr);
+    pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
+    pthread_attr_setschedpolicy(&st_attr,SCHED_FIFO); 
+
+    int st_status = pthread_create(&stID,&st_attr,ls,(void *) blank);
+
+    pthread_attr_destroy(&st_attr); 
      
     //put a small break before starting the clients for clarity
-    sleep(2); 
+    sleep(2);
+
+    pthread_attr_init(&ct_attr);
+    pthread_attr_setdetachstate(&ct_attr, PTHREAD_CREATE_JOINABLE);
+    pthread_attr_setschedpolicy(&ct_attr, SCHED_FIFO);
 
     int ct_status; //check the client threads
 
     for (int i = 1; i <= NUMCLIENTS; i++){
         printf("client thread %d started\n",i);
-        ct_status = pthread_create(&cids[i - 1],NULL,lc,(void *) blank); 
+        ct_status = pthread_create(&cids[i - 1],&ct_attr,lc,(void *) i); 
         
         if(ct_status){
             printf("Failed to create client thread %d\n",i);
         }
 
     }
+
+    pthread_attr_destroy(&ct_attr); 
        
     //MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
 
