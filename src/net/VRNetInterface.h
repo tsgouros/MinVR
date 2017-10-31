@@ -27,6 +27,11 @@
 #include <sys/socket.h>
 #endif
 
+enum CLIENT_STATUS {
+	OK = 0x0,
+	CONNECTION_ERR = 0x1
+};
+
 namespace MinVR {
 
 class VRNetInterface {

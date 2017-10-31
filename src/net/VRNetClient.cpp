@@ -76,6 +76,7 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
   char value = 1;
   setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value));
 
+  status = OK;
   _socketFD = sockfd;
 
 
@@ -109,6 +110,7 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
       if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
         close(sockfd);
         perror("client: connect");
+        exit(1); 
         continue;
       }
     
@@ -130,6 +132,7 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
   char value = 1;
   setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &value, sizeof(value));
 
+  status = OK; 
   _socketFD = sockfd;
 
 #endif

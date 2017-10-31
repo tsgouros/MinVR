@@ -21,6 +21,8 @@ class VRNetClient : public VRNetInterface {
 
   void syncSwapBuffersAcrossAllNodes();
 
+  CLIENT_STATUS status; 
+
  private:
 
   SOCKET _socketFD;

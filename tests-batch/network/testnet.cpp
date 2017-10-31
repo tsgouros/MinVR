@@ -25,7 +25,7 @@ void *ls(void *blank){
         //launch server on port 
         MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
         printf("Server filled connections: Status OK\n"); 
-        MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
+        //MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
         //printf("how about here"); 
     
         pthread_exit(NULL);
@@ -35,7 +35,9 @@ void *ls(void *blank){
 void *lc(void *blank){
     srand(time(NULL));
 	long r = random();
-	MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+    MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+    
+    printf("CLIENT GOT : %d\n",client.status); 
 	if (r % 2 == 0) {
 		sleep(5);
     }
@@ -43,7 +45,7 @@ void *lc(void *blank){
     sleep(2);
 	//std::cout << "lc: SYNC SWAP BUFFERS REQUEST" << std::endl;
 	//client.syncSwapBuffersAcrossAllNodes();
-	exit(0);
+	return (void *) client.status;
 }
 
 
@@ -76,9 +78,19 @@ int main(int argc,char* argv[]){
        
     //MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
 
-    printf("Main Thread continuing\n"); 
+   
+
+    void *rs;
+    pthread_join(cids[0],&rs);
+    printf("Main Thread continuing\n");
 
     pthread_exit(NULL); 
 
+    printf("did we exit?"); 
+
     return 12; 
+}
+
+int try_with_fork(void){
+    return 1;
 }
