@@ -4,10 +4,10 @@
 ## the output.  You can also do 'ctest --memcheck' that runs the tests
 ## with some memory checking enabled.
 
-set (networktests net)
+set (networktests network)
 # The numbers here correspond to 'case' statements in the respective
 # test program.  See, e.g., datumtest.cpp
-set (net_parts 1)
+set (network_parts 1)
 
 # For tests where a list of parts has not been defined we add a default of 1:
 foreach(networktest ${networktests})
@@ -18,7 +18,7 @@ foreach(networktest ${networktests})
   # link cpp files 
   # set(networktestsrc ${networktestsrc} ${networktest}test.cpp)
   # hard coded for now until I have more tests
-  set(networktestsrc ${networktestsrc} nettest.cpp)
+  set(networktestsrc ${networktestsrc} networktest.cpp)
 endforeach()
 
 # Each of these .cpp files has a function with the same name as the
@@ -45,3 +45,7 @@ foreach(networktest ${networktests})
       FAIL_REGULAR_EXPRESSION "ERROR;FAIL;Test failed")
   endforeach()
 endforeach()
+
+add_executable(testnet testnet.cpp)
+set_target_properties(testnet PROPERTIES COMPILE_FLAGS -pthread LINK_FLAGS -pthread)
+target_link_libraries(testnet MinVR)
