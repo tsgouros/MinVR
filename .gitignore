@@ -46,3 +46,6 @@ tramp
 Session.vim
 .netrwhist
 *~
+
+# VS code stufd
+.vscode 
