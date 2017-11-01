@@ -28,6 +28,15 @@ int testSwapBuffer();
 #define LOOP for (int loopctr = 0; loopctr < 10; loopctr++)
 #define NUMCLIENTS 10
 #define PORT "3069"
+#define TEST_DATA "test"
+
+/*
+**********************************************************************
+* A LOT OF REPEATED CODE AND NEED TO CHECK FOR FAILURES BETTER *******      
+* ALSO ADD MORE MODULAR TESTS FOR RECIEVEALL AND SENDALL *************
+* GENERALLY CLEAN ****************************************************
+**********************************************************************
+*/
 
 //global variable that each thread will update with the status of its task
 int tasks[NUMCLIENTS];
@@ -92,9 +101,7 @@ void *testClient(void *ti){
     tasks[task_index] = 1;
   }
 
-  if (r % 2 == 0) {
-      sleep(5);
-  }
+  sleep(5);
   
   pthread_exit((void *) 0); 
 }
@@ -150,13 +157,15 @@ int testConnection(){
   return return_val; 
 }
 
+
+
 void *testServer_ed(void *blank)
 {
   //launch server on port, if it gets all connections it will exit
   MinVR::VRNetServer server = MinVR::VRNetServer(PORT, NUMCLIENTS);
 
   //wait for event data sync requests from clients
-  MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
+  MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes(TEST_DATA);
 
   pthread_exit((void *)0);
 }
@@ -172,7 +181,8 @@ void *testClient_ed(void *ti)
 
   MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
-  MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes("a");
+  MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes(TEST_DATA);
+  printf("%s\n",eventData); 
 
   if (client.status == 0)
   {
@@ -183,10 +193,7 @@ void *testClient_ed(void *ti)
       tasks[task_index] = 1;
     }
 
-    if (r % 2 == 0)
-    {
-      sleep(5);
-    }
+    sleep(5); 
 
     pthread_exit((void *)0);
 }
@@ -200,7 +207,7 @@ int testEventData()
   pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
   pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
 
-  int st_status = pthread_create(&stID, &st_attr, &testServer, NULL);
+  int st_status = pthread_create(&stID, &st_attr, &testServer_ed, NULL);
 
   pthread_attr_destroy(&st_attr);
 
@@ -219,7 +226,7 @@ int testEventData()
   for (int index = 0; index < NUMCLIENTS; index++)
   {
 
-    ct_status = pthread_create(&cids[index], &ct_attr, &testClient, (void *)index);
+    ct_status = pthread_create(&cids[index], &ct_attr, &testClient_ed, (void *)index);
 
     if (ct_status != 0)
     {
@@ -246,6 +253,95 @@ int testEventData()
   return return_val;
 }
 
+void *testServer_sb(void *blank)
+{
+  //launch server on port, if it gets all connections it will exit
+  MinVR::VRNetServer server = MinVR::VRNetServer(PORT, NUMCLIENTS);
+
+  //wait for event data sync requests from clients
+  server.syncSwapBuffersAcrossAllNodes();
+
+  pthread_exit((void *)0);
+}
+
+// pass in the index of the task array this thread will update
+void *testClient_sb(void *ti)
+{
+  srand(time(NULL));
+  long r = random();
+
+  // cast to integer big enough to hold pointer
+  intptr_t task_index = (intptr_t)ti;
+
+  MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+
+  client.syncSwapBuffersAcrossAllNodes();
+
+  //if it doesn't hang and the client is ok I guess it passes..
+  if (client.status == 0)
+  {
+    tasks[task_index] = 0;
+  }
+  else
+  {
+    tasks[task_index] = 1;
+  }
+
+  sleep(5);
+
+  pthread_exit((void *)0);
+}
+
 int testSwapBuffer(){
-  return 0; 
+  pthread_t stID, cids[NUMCLIENTS];
+  pthread_attr_t ct_attr, st_attr;
+
+  pthread_attr_init(&st_attr);
+  pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO);
+
+  int st_status = pthread_create(&stID, &st_attr, &testServer_sb, NULL);
+
+  pthread_attr_destroy(&st_attr);
+
+  if (st_status != 0)
+  {
+    printf("Server thread creation failure");
+    return 1;
+  }
+
+  int ct_status; //check the client threads
+
+  pthread_attr_init(&ct_attr);
+  pthread_attr_setdetachstate(&ct_attr, PTHREAD_CREATE_JOINABLE);
+  pthread_attr_setschedpolicy(&ct_attr, SCHED_FIFO);
+
+  for (int index = 0; index < NUMCLIENTS; index++)
+  {
+
+    ct_status = pthread_create(&cids[index], &ct_attr, &testClient_sb, (void *)index);
+
+    if (ct_status != 0)
+    {
+      printf("client thread %d creation failure", index);
+      return 1;
+    }
+  }
+
+  pthread_attr_destroy(&ct_attr);
+
+  // wait for child threads then cut
+  pthread_exit(NULL);
+
+  int return_val = 0;
+
+  for (int i = 0; i < NUMCLIENTS; i++)
+  {
+    if (tasks[i] == 0)
+    {
+      return_val = 1;
+    }
+  }
+
+  return return_val;
 }

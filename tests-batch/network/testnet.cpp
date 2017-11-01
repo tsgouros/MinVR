@@ -1,3 +1,5 @@
+//Network testing Dev
+// So I can get print lines and control flow easier (screw you ctest)
 #include <stdio.h>
 #include <vector>
 #include <sys/types.h>
@@ -27,7 +29,10 @@ void *ls(void *blank){
         //launch server on port 
         MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
         printf("Server filled connections: Status OK\n"); 
-        //MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
+        MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
+
+        printf("%s\n", eventData);
+
         //printf("how about here"); 
     
         pthread_exit(NULL);
@@ -39,9 +44,9 @@ void *lc(void *blank){
 	long r = random();
     MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
-    pthread_t my_id = pthread_self(); 
-    
-    printf("This is thread: %d \n",blank); 
+    pthread_t my_id = pthread_self();
+
+    MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes("a");
 
     sleep(5); 
     
@@ -89,8 +94,6 @@ int main(int argc,char* argv[]){
        
     //MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
 
-   
-
     void *rs;
     pthread_join(cids[0],&rs);
     printf("Main Thread continuing\n");
@@ -102,6 +105,3 @@ int main(int argc,char* argv[]){
     return 12; 
 }
 
-int try_with_fork(void){
-    return 1;
-}
