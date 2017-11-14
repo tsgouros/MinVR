@@ -41,7 +41,8 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
   }
 
   //This is a temporary fix to ensure the client can connect and that the connection is not refused
-  while(p == NULL){
+  //while(p == NULL){
+  for (int i = 0; i<FORCE_CONNECTION,p==NULL;i++){
     // loop through all the results and connect to the first we can
     for (p = servinfo; p != NULL; p = p->ai_next) {
       if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == INVALID_SOCKET) {
@@ -59,6 +60,7 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
       break;
     }
   }
+ // }
 
   if (p == NULL) {
     fprintf(stderr, "client: failed to connect\n");
@@ -99,7 +101,8 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
   }
   
   //This is a temporary fix to ensure the client can connect and that the connection is not refused
-  while(p == NULL){
+  //while(p == NULL){
+  for (int i = 0; i < FORCE_CONNECTION, p == NULL; i++){
     // loop through all the results and connect to the first we can
     for (p = servinfo; p != NULL; p = p->ai_next) {
       if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
@@ -117,6 +120,7 @@ VRNetClient::VRNetClient(const std::string &serverIP, const std::string &serverP
       break;
     }
   }
+  //}
   if (p == NULL) {
     fprintf(stderr, "client: failed to connect\n");
     //return 2;

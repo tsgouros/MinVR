@@ -8,6 +8,8 @@
   #include <arpa/inet.h>
 #endif
 
+#define FORCE_CONNECTION 5
+
 namespace MinVR {
 
 class VRNetClient : public VRNetInterface {
