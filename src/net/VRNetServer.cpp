@@ -26,7 +26,7 @@ void *get_in_addr(struct sockaddr *sa) {
 
 VRNetServer::VRNetServer(const std::string &listenPort, int numExpectedClients) 
 {
-
+  printf("Begin call to VRNetServer()\n");
 #ifdef WIN32  // Winsock implementation
 
   WSADATA wsaData;
@@ -125,6 +125,7 @@ VRNetServer::VRNetServer(const std::string &listenPort, int numExpectedClients)
 
 #else  // BSD sockets implementation
 
+  
   int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
   struct addrinfo hints, *servinfo, *p;
   struct sockaddr_storage their_addr; // connector's address information
@@ -186,7 +187,7 @@ VRNetServer::VRNetServer(const std::string &listenPort, int numExpectedClients)
     perror("sigaction");
     exit(1);
   }
-  
+
   printf("server: waiting for connections...\n");
 
   int numConnected = 0;

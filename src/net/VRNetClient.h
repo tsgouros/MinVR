@@ -8,6 +8,8 @@
   #include <arpa/inet.h>
 #endif
 
+#define FORCE_CONNECTION 5
+
 namespace MinVR {
 
 class VRNetClient : public VRNetInterface {
@@ -20,6 +22,8 @@ class VRNetClient : public VRNetInterface {
     syncEventDataAcrossAllNodes(VRDataQueue::serialData eventData);
 
   void syncSwapBuffersAcrossAllNodes();
+
+  CLIENT_STATUS status; 
 
  private:
 
