@@ -40,7 +40,7 @@ int testSwapBuffer();
 
 //global variable that each thread will update with the status of its task
 int tasks[NUMCLIENTS];
-pthread_mutex_t task_mutext = PTHREAD_MUTEX_INITIALIZER; 
+pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER; 
 
 int networktest(int argc, char* argv[]) {
   
