@@ -40,6 +40,7 @@ int testSwapBuffer();
 
 //global variable that each thread will update with the status of its task
 int tasks[NUMCLIENTS];
+pthread_mutex_t task_mutext = PTHREAD_MUTEX_INITIALIZER; 
 
 int networktest(int argc, char* argv[]) {
   
@@ -95,11 +96,13 @@ void *testClient(void *ti){
 
   MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
+  pthread_mutex_lock(&task_mutex);
   if (client.status == 0){
     tasks[task_index] = 0;
   } else {
     tasks[task_index] = 1;
   }
+  pthread_mutex_unlock(&task_mutex);
 
   sleep(5);
   
@@ -171,8 +174,7 @@ void *testServer_ed(void *blank)
 }
 
 // pass in the index of the task array this thread will update
-void *testClient_ed(void *ti)
-{
+void *testClient_ed(void *ti) {
   srand(time(NULL));
   long r = random();
 
@@ -184,22 +186,20 @@ void *testClient_ed(void *ti)
   MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes(TEST_DATA);
   printf("%s\n",eventData); 
 
-  if (client.status == 0)
-  {
+  pthread_mutex_lock(&task_mutex);
+  if (client.status == 0) {
     tasks[task_index] = 0;
-    }
-    else
-    {
+  } else {
       tasks[task_index] = 1;
     }
+  pthread_mutex_unlock(&task_mutex);
 
     sleep(5); 
 
     pthread_exit((void *)0);
 }
 
-int testEventData()
-{
+int testEventData() {
   pthread_t stID, cids[NUMCLIENTS];
   pthread_attr_t ct_attr, st_attr;
 
@@ -278,14 +278,13 @@ void *testClient_sb(void *ti)
   client.syncSwapBuffersAcrossAllNodes();
 
   //if it doesn't hang and the client is ok I guess it passes..
-  if (client.status == 0)
-  {
+  pthread_mutex_lock(&task_mutex);
+  if (client.status == 0) {
     tasks[task_index] = 0;
-  }
-  else
-  {
+  } else {
     tasks[task_index] = 1;
   }
+  pthread_mutex_unlock(&task_mutex);
 
   sleep(5);
 
