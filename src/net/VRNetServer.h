@@ -13,7 +13,7 @@
 
 #include <math/VRMath.h>
 #include <config/VRDataIndex.h>
-
+#include <pthread.h> 
 namespace MinVR {
   
 class VRNetServer : public VRNetInterface {
