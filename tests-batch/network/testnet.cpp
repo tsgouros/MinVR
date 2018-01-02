@@ -20,7 +20,7 @@ extern "C" {
 }
 
 #define PORT "3069"
-#define NUMCLIENTS 2
+#define NUMCLIENTS 10
 
 int tasks[NUMCLIENTS];
 
@@ -31,9 +31,7 @@ void *ls(void *blank){
         printf("Server filled connections: Status OK\n"); 
         MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
 
-        printf("%s\n", eventData);
-
-        //printf("how about here"); 
+        printf("sync event data\n");
     
         pthread_exit(NULL);
     
@@ -41,11 +39,12 @@ void *ls(void *blank){
 
 void *lc(void *blank){
     srand(time(NULL));
-	long r = random();
+    long r = random();
     MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
     pthread_t my_id = pthread_self();
 
+    printf("=================BEEP=====================\n");
     MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes("a");
 
     sleep(5); 
@@ -63,6 +62,10 @@ int main(int argc,char* argv[]){
 
     int blank = 1;
 
+    #ifdef USE_PTHREAD 
+    printf("OH WHOA\n"); 
+    #endif
+    
     pthread_attr_init(&st_attr);
     pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
     pthread_attr_setschedpolicy(&st_attr,SCHED_FIFO); 
@@ -81,7 +84,7 @@ int main(int argc,char* argv[]){
     int ct_status; //check the client threads
 
     for (int i = 1; i <= NUMCLIENTS; i++){
-        printf("client thread %d started\n",i);
+        //printf("client thread %d started\n",i);
         ct_status = pthread_create(&cids[i - 1],&ct_attr,lc,(void *) i); 
         
         if(ct_status){
@@ -95,7 +98,7 @@ int main(int argc,char* argv[]){
     //MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
 
     void *rs;
-    pthread_join(cids[0],&rs);
+    //pthread_join(cids[0],&rs);
     printf("Main Thread continuing\n");
 
     pthread_exit(NULL); 

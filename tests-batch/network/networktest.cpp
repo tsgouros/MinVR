@@ -21,8 +21,8 @@ extern "C" {
 // detail.  This will also print out whatever goes to std::cout.
 
 int testConnection(); //test that clients and servers can connect
-int testEventData();
-int testSwapBuffer(); 
+int testEventData(); //test that we can sync and swap event data
+int testSwapBuffer(); //test that we can sync and send a swap buffer request 
 
 // You can make this long to get better timing data.
 #define LOOP for (int loopctr = 0; loopctr < 10; loopctr++)
@@ -44,10 +44,11 @@ pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int networktest(int argc, char* argv[]) {
   
+  // if running a specific test and no test is specified 
   int defaultchoice = 1;
-  
   int choice = defaultchoice;
 
+  // if there is a command line argument passed use this as the test number
   if (argc > 1) {
     if(sscanf(argv[1], "%d", &choice) != 1) {
       printf("Couldn't parse that input as a number\n");
@@ -111,14 +112,14 @@ void *testClient(void *ti){
 
 
 int testConnection(){ 
-  pthread_t stID, cids[NUMCLIENTS];
+  pthread_t serverTID, clientTID[NUMCLIENTS];
   pthread_attr_t ct_attr, st_attr; 
 
   pthread_attr_init(&st_attr); 
   pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
   pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO); 
 
-  int st_status = pthread_create(&stID,&st_attr,&testServer,NULL);
+  int st_status = pthread_create(&serverTID,&st_attr,&testServer,NULL);
 
   pthread_attr_destroy(&st_attr); 
 
@@ -135,7 +136,7 @@ int testConnection(){
 
   for (int index = 0; index < NUMCLIENTS; index++){
 
-      ct_status = pthread_create(&cids[index],&ct_attr,&testClient,(void *) index); 
+      ct_status = pthread_create(&clientTID[index],&ct_attr,&testClient,(void *) index); 
 
       if (ct_status != 0) {
         printf("client thread %d creation failure",index);
@@ -152,8 +153,8 @@ int testConnection(){
   int return_val = 0; 
 
   for (int i = 0; i < NUMCLIENTS; i++){
-    if(tasks[i] == 0){
-      return_val = 1;
+    if(tasks[i]){
+      return_val = -1;
     }
   }
 
@@ -334,10 +335,8 @@ int testSwapBuffer(){
 
   int return_val = 0;
 
-  for (int i = 0; i < NUMCLIENTS; i++)
-  {
-    if (tasks[i] == 0)
-    {
+  for (int i = 0; i < NUMCLIENTS; i++) {
+    if (tasks[i] == 0) {
       return_val = 1;
     }
   }

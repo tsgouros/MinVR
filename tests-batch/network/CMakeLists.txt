@@ -29,9 +29,6 @@ add_executable(test-network ${srclist})
 set_target_properties(test-network PROPERTIES COMPILE_FLAGS -pthread LINK_FLAGS -pthread)
 target_link_libraries(test-network MinVR)
 
-# When it's compiled you can run the test-dataindex executable and
-# specify a particular test and subtest:
-#./test-dataindex queuetest 1
 #All that's left is to tell CMake to generate the test cases:
 
 set($ENV{MVRHOME} ${CMAKE_SOURCE_DIR})
