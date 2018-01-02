@@ -8,6 +8,7 @@
   #include <arpa/inet.h>
 #endif
 
+// will quit connection loop after this many tries
 #define FORCE_CONNECTION 5
 
 namespace MinVR {

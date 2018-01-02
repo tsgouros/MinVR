@@ -156,13 +156,17 @@ VRNetClient::~VRNetClient()
 
 VRDataQueue::serialData
 VRNetClient::syncEventDataAcrossAllNodes(VRDataQueue::serialData eventData) {
-  
+
+  printf("Client %d Sending\n",_socketFD);
   // 1. send inputEvents to server
   sendEventData(_socketFD, eventData);
 
+  printf("Client %d Waiting for event data\n",_socketFD);
   // 2. receive all events from the server
   VRDataQueue::serialData allEvents = waitForAndReceiveEventData(_socketFD);
-  
+
+  printf("%d Recieve \n",_socketFD);
+
   return allEvents;
 }
 
