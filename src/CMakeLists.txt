@@ -245,6 +245,19 @@ source_group("Config Files" FILES ${vr_config_files})
 
 add_library(MinVR ${vr_sources})
 
+# For now I'm just going to add the pthread library to the entire source code because 
+# I highkey don't understand CMake. TODO: Figure out how to just link with the network installation
+find_package(Threads) 
+target_link_libraries(MinVR -pthread)
+
+if (CMAKE_USE_PTHREADS_INIT) 
+  add_definitions(-DUSE_PTHREAD)
+endif (CMAKE_USE_PTHREADS_INIT)
+
+if (CMAKE_HP_PTHREADS_INIT) 
+  add_definitions(-DUSE_PTHREAD)
+endif (CMAKE_HP_PTHREADS_INIT)
+
 install(TARGETS MinVR
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
