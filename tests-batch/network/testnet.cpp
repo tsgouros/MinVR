@@ -19,13 +19,13 @@ extern "C" {
     #include <pthread.h>
 }
 
-#define PORT "3069"
-#define NUMCLIENTS 100
+#define PORT "3490"
+#define NUMCLIENTS 10
 
 int tasks[NUMCLIENTS];
 
 void *ls(void *blank){
-   
+        printf("Launch Server\n"); 
         //launch server on port 
         MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
         printf("Server filled connections: Status OK\n"); 
@@ -42,7 +42,7 @@ void *ls(void *blank){
 void *lc(void *blank){
     srand(time(NULL));
     long r = random();
-    MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+    MinVR::VRNetClient client = MinVR::VRNetClient("127.0.0.1", PORT);
 
     sleep(10); 
 

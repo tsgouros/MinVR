@@ -24,7 +24,7 @@ namespace MinVR {
     pthread_mutex_t mutex; 
     int ready; 
     VRDataQueue dq; 
-    VRDataQueue::serialData sq; 
+    VRDataQueue::serialData *sq; 
   } client_control_t; 
 
   // struct to pass as argument to client response threads

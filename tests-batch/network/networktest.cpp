@@ -26,9 +26,9 @@ int testSwapBuffer(); //test that we can sync and send a swap buffer request
 
 // You can make this long to get better timing data.
 #define LOOP for (int loopctr = 0; loopctr < 10; loopctr++)
-#define NUMCLIENTS 10
-#define PORT "3069"
-#define TEST_DATA "test"
+#define NUMCLIENTS 5
+#define PORT "3490"
+#define TEST_DATA "a"
 
 /*
 **********************************************************************
@@ -44,6 +44,7 @@ pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int networktest(int argc, char* argv[]) {
   
+  fprintf(stderr,"Hello World\n"); 
   // if running a specific test and no test is specified 
   int defaultchoice = 1;
   int choice = defaultchoice;
@@ -95,7 +96,7 @@ void *testClient(void *ti){
   // cast to integer big enough to hold pointer
   intptr_t task_index = (intptr_t) ti;
 
-  MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+  MinVR::VRNetClient client = MinVR::VRNetClient("127.0.0.1", PORT);
 
   pthread_mutex_lock(&task_mutex);
   if (client.status == 0){
@@ -127,6 +128,9 @@ int testConnection(){
       printf("Server thread creation failure"); 
       return 1;
   } 
+
+  //avoid thread clobbering
+  sleep(2); 
 
   int ct_status; //check the client threads
 
@@ -168,10 +172,8 @@ void *testServer_ed(void *blank)
 {
   //launch server on port, if it gets all connections it will exit
   MinVR::VRNetServer server = MinVR::VRNetServer(PORT, NUMCLIENTS);
-
   //wait for event data sync requests from clients
   MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes(TEST_DATA);
-
   pthread_exit((void *)0);
 }
 
@@ -183,7 +185,7 @@ void *testClient_ed(void *ti) {
   // cast to integer big enough to hold pointer
   intptr_t task_index = (intptr_t)ti;
 
-  MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+  MinVR::VRNetClient client = MinVR::VRNetClient("127.0.0.1", PORT);
 
   MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes(TEST_DATA);
 
@@ -217,6 +219,11 @@ int testEventData() {
     printf("Server thread creation failure");
     return 1;
   }
+
+  printf("made server thread\n");
+
+  //avoid thread clobbering
+  sleep(2); 
 
   int ct_status; //check the client threads
 
@@ -274,7 +281,7 @@ void *testClient_sb(void *ti)
   // cast to integer big enough to hold pointer
   intptr_t task_index = (intptr_t)ti;
 
-  MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
+  MinVR::VRNetClient client = MinVR::VRNetClient("127.0.0.1", PORT);
 
   client.syncSwapBuffersAcrossAllNodes();
 
@@ -309,6 +316,9 @@ int testSwapBuffer(){
     printf("Server thread creation failure");
     return 1;
   }
+
+  //avoid thread clobbering
+  sleep(2); 
 
   int ct_status; //check the client threads
 

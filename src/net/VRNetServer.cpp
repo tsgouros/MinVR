@@ -28,6 +28,7 @@ int VRNetServer::numClients = 0;
 VRNetServer::VRNetServer(const std::string &listenPort, int numExpectedClients) { 
 
   // init global variables
+  ctr = (client_control_t *) malloc(sizeof(client_control_t)); 
   numClients = numExpectedClients; 
   ctr->respond = PTHREAD_COND_INITIALIZER; 
   ctr->mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -225,6 +226,7 @@ VRNetServer::VRNetServer(const std::string &listenPort, int numExpectedClients) 
 }
 
 VRNetServer::~VRNetServer() {
+  free(ctr); 
   for (std::vector<SOCKET>::iterator i=_clientSocketFDs.begin(); i < _clientSocketFDs.end(); i++) {
 	#ifdef WIN32
       closesocket(*i);
@@ -253,19 +255,18 @@ void *VRNetServer::handleClientED(void *args) {
   // add the received data to the client control queue
   ctr->dq.addSerializedQueue(ed);
   ctr->ready++; 
-  
+
   // check to see if this was the last client
   if (ctr->ready == numClients) {
-      printf("broadcast\n");
       pthread_cond_broadcast(&ctr->respond);
 
       // we can assume that we have all the data at this point so we will serialize it 
-      ctr->sq = ctr->dq.serialize();
+      VRDataQueue::serialData sd = ctr->dq.serialize(); 
+      ctr->sq = &sd; 
   }
 
   // if this is not the last client wait in conditional loop 
   while (ctr->ready != numClients) {
-      printf("Client %d waiting...\n",resInfo->client);
       pthread_cond_wait(&ctr->respond, &ctr->mutex);
     }
   
@@ -273,8 +274,8 @@ void *VRNetServer::handleClientED(void *args) {
   pthread_mutex_unlock(&ctr->mutex);
   
   // broadcast the serialized data to this client 
-  sendEventData(resInfo->client,ctr->sq);
-  
+  sendEventData(resInfo->client,*ctr->sq);
+
   // done with this thread :) 
   pthread_exit(NULL);
 }
@@ -296,13 +297,11 @@ void* VRNetServer::handleClientSB(void* args) {
 
     // check to see if this was the last client
     if (ctr->ready == numClients) {
-        printf("broadcast\n");
         pthread_cond_broadcast(&ctr->respond); 
     }
 
     // if this is not the last client wait in conditional loop
     while (ctr->ready != numClients) {
-        printf("Client %d waiting...\n", resInfo->client);
         pthread_cond_wait(&ctr->respond, &ctr->mutex);
     }
 
@@ -311,8 +310,6 @@ void* VRNetServer::handleClientSB(void* args) {
 
     // broadcast the serialized data to this client
     sendSwapBuffersNow(resInfo->client);
-
-    free(resInfo); 
 
     // done with this thread :)
     pthread_exit(NULL);
@@ -328,6 +325,9 @@ void VRNetServer::JarodFunction(msgType mt){
 
     // array to store client thread ids
     pthread_t *cHandleThreads = (pthread_t *) malloc(sizeof(pthread_t) * numClients);
+
+    // array to store client arguments
+    client_service_t *cArgs = (client_service_t *) malloc(sizeof(client_service_t) * numClients);
 
     // make a copy of the client FD set to filter as we loop through select. 
     // we need to filter FD's out of the set once they have been flagged because 
@@ -355,14 +355,13 @@ void VRNetServer::JarodFunction(msgType mt){
             // if this fd is ready to read create a thread to handle it 
             if (FD_ISSET(*i, serviceSet)) {
 
-                client_service_t* arg = (client_service_t*)malloc(sizeof(client_service_t));
-                arg->client = *i;
+                cArgs[cHandleCount].client = *i;
                 
                 // generate handle thread
                 if (mt == EVENTDATA) {
-                    pthread_create(&cHandleThreads[cHandleCount], 0, (void* (*)(void*))VRNetServer::handleClientED, (void*)arg);
+                    pthread_create(&cHandleThreads[cHandleCount], 0, (void* (*)(void*))VRNetServer::handleClientED, (void*) &cArgs[cHandleCount]);
                 } else if (mt == SWAPBUFFER) {
-                    pthread_create(&cHandleThreads[cHandleCount], 0, (void* (*)(void*))VRNetServer::handleClientSB, (void*)arg);
+                    pthread_create(&cHandleThreads[cHandleCount], 0, (void* (*)(void*))VRNetServer::handleClientSB, (void*) &cArgs[cHandleCount]);
                 }
 
                 // remove this fd from the set of fds that needs to be serviced
@@ -385,6 +384,7 @@ void VRNetServer::JarodFunction(msgType mt){
     }
     
     // ok we are good to clean up 
+    free(cArgs);
     free(cHandleThreads); 
     free(serviceSet); 
     free(runningSet); 
@@ -399,7 +399,7 @@ VRDataQueue::serialData VRNetServer::syncEventDataAcrossAllNodes(VRDataQueue::se
 
     //this function will delegate threads to deal with all the clients at once 
     // JarodFunction(EVENTDATA);
-    // return ctr->sq; 
+    // return *ctr->sq; 
 
     // TODO: rather than a for loop, could use a select() system call
     // here (I think) to figure out whic{h socket is ready for a read in
