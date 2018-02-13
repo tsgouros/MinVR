@@ -20,7 +20,7 @@ extern "C" {
 }
 
 #define PORT "3069"
-#define NUMCLIENTS 10
+#define NUMCLIENTS 100
 
 int tasks[NUMCLIENTS];
 
@@ -29,6 +29,8 @@ void *ls(void *blank){
         //launch server on port 
         MinVR::VRNetServer server = MinVR::VRNetServer(PORT,NUMCLIENTS);
         printf("Server filled connections: Status OK\n"); 
+
+        sleep(10); 
         MinVR::VRDataQueue::serialData eventData = server.syncEventDataAcrossAllNodes("a");
 
         printf("sync event data\n");
@@ -42,12 +44,18 @@ void *lc(void *blank){
     long r = random();
     MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
+    sleep(10); 
+
     pthread_t my_id = pthread_self();
 
-    printf("=================BEEP=====================\n");
-    MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes("a");
+    //printf("%ld\n",r); 
+    if (!(r % 3)){
+        sleep(2); 
+    }
 
-    sleep(5); 
+    printf("=================SSED CLIENT %d=====================\n");
+
+    MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes("a"); 
     
 	//std::cout << "lc: SYNC SWAP BUFFERS REQUEST" << std::endl;
 	//client.syncSwapBuffersAcrossAllNodes();
@@ -68,13 +76,19 @@ int main(int argc,char* argv[]){
     
     pthread_attr_init(&st_attr);
     pthread_attr_setdetachstate(&st_attr, PTHREAD_CREATE_JOINABLE);
-    pthread_attr_setschedpolicy(&st_attr,SCHED_FIFO); 
+    pthread_attr_setschedpolicy(&st_attr, SCHED_FIFO); 
 
+    // create server thread
     int st_status = pthread_create(&stID,&st_attr,ls,(void *) blank);
+
+    if (st_status) { 
+        fprintf(stderr,"pthread_create falied with Error code %d\n",st_status); 
+    }
 
     pthread_attr_destroy(&st_attr); 
      
-    //put a small break before starting the clients for clarity
+    //put a small break before starting the clients for clarity 
+    // and to avoid clobbering (if that's even a thing)
     sleep(2);
 
     pthread_attr_init(&ct_attr);

@@ -150,6 +150,7 @@ int testConnection(){
   // wait for child threads then cut 
   pthread_exit(NULL); 
 
+  fprintf(stderr,"NOOOO\n"); 
   int return_val = 0; 
 
   for (int i = 0; i < NUMCLIENTS; i++){
@@ -185,7 +186,7 @@ void *testClient_ed(void *ti) {
   MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
   MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes(TEST_DATA);
-  printf("%s\n",eventData); 
+  fprintf(stderr,"%s\n",eventData); 
 
   pthread_mutex_lock(&task_mutex);
   if (client.status == 0) {
