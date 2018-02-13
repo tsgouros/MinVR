@@ -186,7 +186,6 @@ void *testClient_ed(void *ti) {
   MinVR::VRNetClient client = MinVR::VRNetClient("localhost", PORT);
 
   MinVR::VRDataQueue::serialData eventData = client.syncEventDataAcrossAllNodes(TEST_DATA);
-  fprintf(stderr,"%s\n",eventData); 
 
   pthread_mutex_lock(&task_mutex);
   if (client.status == 0) {
