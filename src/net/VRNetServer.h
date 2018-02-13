@@ -30,8 +30,12 @@ namespace MinVR {
   // struct to pass as argument to client response threads
   typedef struct client_service { 
     SOCKET client;
-    unsigned char msg_type; 
   } client_service_t; 
+
+  enum msgType {
+    EVENTDATA, 
+    SWAPBUFFER
+  };
 
 class VRNetServer : public VRNetInterface {
  public:
@@ -44,15 +48,16 @@ class VRNetServer : public VRNetInterface {
   VRDataQueue::serialData syncEventDataAcrossAllNodes();
 
   void syncSwapBuffersAcrossAllNodes();
-  static void *handleClient(void *);
-  void JarodFunction();
 
   // initialize client control static variable
   static client_control_t* ctr;
   static int numClients;
 
   private:
-
+  
+  static void *handleClientED(void *);
+  static void* handleClientSB(void *);
+  void JarodFunction(msgType);
   // variable to store client file descriptors 
   std::vector<SOCKET> _clientSocketFDs;
 
@@ -61,9 +66,6 @@ class VRNetServer : public VRNetInterface {
 
   // variables to control select loop 
   int maxFD;
-  
-  // array of thread id's for handle threads
-  pthread_t *handleThreads; 
 
 
 };
